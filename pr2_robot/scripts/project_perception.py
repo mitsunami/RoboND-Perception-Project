@@ -64,7 +64,7 @@ def pcl_callback(pcl_msg):
 
     # TODO: Voxel Grid Downsampling
     vox = cloud_filtered.make_voxel_grid_filter()
-    LEAF_SIZE = 0.01 #0.003
+    LEAF_SIZE = 0.006 #0.01 #0.003
     vox.set_leaf_size(LEAF_SIZE, LEAF_SIZE, LEAF_SIZE)
     cloud_filtered = vox.filter()
 
@@ -188,8 +188,8 @@ def pcl_callback(pcl_msg):
     # Could add some logic to determine whether or not your object detections are robust
     # before calling pr2_mover()
     try:
-        #pr2_mover(detected_objects_list)
         pr2_mover(detected_objects)
+        #pass
     except rospy.ROSInterruptException:
         pass
 
@@ -212,10 +212,12 @@ def pr2_mover(object_list):
         labels.append(object.label)
         points_arr = ros_to_pcl(object.cloud).to_array()
         centroids.append(np.mean(points_arr, axis=0)[:3])
-        detected_object_dict.update( {object.label: np.mean(points_arr, axis=0)[:3]})
+        if not object.label in detected_object_dict:
+            detected_object_dict.update( {object.label: np.mean(points_arr, axis=0)[:3]})
     #rospy.loginfo('centroid {}'.format(np.mean(points_arr, axis=0)))
+    #print(detected_object_dict)
     test_scene_num = Int32()
-    test_scene_num.data = 1 # TODO: get param
+    test_scene_num.data = 3 # TODO: get param
 
     dropbox_dict = {}
     for i in range(len(dropbox_param)):
@@ -253,6 +255,7 @@ def pr2_mover(object_list):
         # TODO: Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
         # Populate various ROS messages
         #rospy.loginfo('ROS msg {}, {}, {}, {}, {}'.format(test_scene_num, arm_name, object_name, pick_pose, place_pose) )
+        print(object_name.data)
         yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
         dict_list.append(yaml_dict)
     
@@ -272,6 +275,7 @@ def pr2_mover(object_list):
             print "Service call failed: %s"%e
 
     # TODO: Output your request parameters into output yaml file
+    #print ("output: " + str(len(dict_list)))
     yaml_filename = 'output_' + str(test_scene_num.data) + '.yaml'
     send_to_yaml(yaml_filename, dict_list)
 
