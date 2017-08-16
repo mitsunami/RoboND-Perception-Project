@@ -23,6 +23,7 @@ from std_msgs.msg import String
 from pr2_robot.srv import *
 from rospy_message_converter import message_converter
 import yaml
+import math
 
 
 # Helper function to get surface normals
@@ -133,11 +134,13 @@ def pcl_callback(pcl_msg):
     ros_cloud_objects = pcl_to_ros(extracted_outliers)
     ros_cloud_table   = pcl_to_ros(extracted_inliers)
     ros_cluster_cloud = pcl_to_ros(cluster_cloud)
+    #ros_collision_map = pcl_to_ros(extracted_inliers)
 
     # TODO: Publish ROS messages
     pcl_objects_pub.publish(ros_cloud_objects)
     pcl_table_pub.publish(ros_cloud_table)
     pcl_cluster_pub.publish(ros_cluster_cloud)
+    #collision_map_pub.publish(ros_collision_map)
 
 # Exercise-3 TODOs:
 
@@ -217,13 +220,22 @@ def pr2_mover(object_list):
     #rospy.loginfo('centroid {}'.format(np.mean(points_arr, axis=0)))
     #print(detected_object_dict)
     test_scene_num = Int32()
-    test_scene_num.data = 3 # TODO: get param
+    test_scene_num.data = rospy.get_param("test_scene_num")
 
     dropbox_dict = {}
     for i in range(len(dropbox_param)):
         dropbox_dict.update( {dropbox_param[i]['group']:[dropbox_param[i]['name'], dropbox_param[i]['position']]} )
 
     # TODO: Rotate PR2 in place to capture side tables for the collision map
+    #rate = rospy.Rate(1000)
+    #pr2_world_joint_pub.publish(math.pi/2)
+    #rate.sleep()
+    ##collision_map_pub.publish(pcl_msg)
+    #pr2_world_joint_pub.publish(-math.pi/2)
+    #rate.sleep()
+    #rate.sleep()
+    #pr2_world_joint_pub.publish(0.0)
+    #rate.sleep()
 
     # TODO: Loop through the pick list
     dict_list = []
@@ -255,7 +267,7 @@ def pr2_mover(object_list):
         # TODO: Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
         # Populate various ROS messages
         #rospy.loginfo('ROS msg {}, {}, {}, {}, {}'.format(test_scene_num, arm_name, object_name, pick_pose, place_pose) )
-        print(object_name.data)
+        #print(object_name.data)
         yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
         dict_list.append(yaml_dict)
     
@@ -294,6 +306,8 @@ if __name__ == '__main__':
     pcl_cluster_pub = rospy.Publisher("/pcl_cluster", PointCloud2, queue_size=1)
     object_markers_pub   = rospy.Publisher("/object_markers",   Marker, queue_size=1)
     detected_objects_pub = rospy.Publisher("/detected_objects", DetectedObjectsArray, queue_size=1)
+    #collision_map_pub = rospy.Publisher("/pr2/3d_map/points", PointCloud2, queue_size=1)
+    #pr2_world_joint_pub = rospy.Publisher("/pr2/world_joint_controller/command", Float64, queue_size=10)
 
     # TODO: Load Model From disk
     model = pickle.load(open('model.sav', 'rb'))
